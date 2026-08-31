@@ -26,7 +26,7 @@ The recipient list is driven entirely by Gmail — no addresses are stored in th
 - **Adding subscribers:** forward the anchor email (from the shyguygamedev@gmail.com mailbox — the account the Gmail connector is attached to) to whoever should receive the digest. Keep Gmail's default `Fwd:` prefix; do not edit the subject line.
 - **How the list is built each run:** before sending, the agent searches the whole mailbox for `subject:"News Digest: Aug 28 – Aug 31, 2026"`, which matches the anchor email and every `Fwd:` of it. It collects every To/Cc address across those messages, lowercases, dedupes, and drops shyguygamedev@gmail.com. The result is the extra subscriber list.
 - **The list is re-derived from scratch on every run** — forward the anchor to more people at any time and they are automatically included on the next send.
-- **Send format:** one email per run, `To:` shyguygamedev@gmail.com and `Bcc:` all extra subscribers (Bcc so subscribers can't see each other's addresses).
+- **Send format:** one email per run, `To:` shyguygamedev@gmail.com and `Cc:` all extra subscribers.
 - **Limitations:** only forwards sent from the shyguygamedev@gmail.com mailbox are visible. Removing a subscriber currently requires deleting their forward from All Mail.
 
 ## Dedup (updated for forwards)
