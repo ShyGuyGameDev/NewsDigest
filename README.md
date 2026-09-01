@@ -1,10 +1,10 @@
 # NewsDigest
 
-Send a news + fun facts digest email every Monday and Friday at 7:00 AM.
+Send a news + fun facts digest email every Monday, Wednesday, and Friday at 7:00 AM.
 
 - **From/To:** shyguygamedev@gmail.com → shyguygamedev@gmail.com (send from and to the same address)
-- **Schedule:** Every Monday and Friday at 7:00 AM
-- **Coverage window:** Everything notable since the last digest (previous Friday for a Monday send, previous Monday for a Friday send)
+- **Schedule:** Every Monday, Wednesday, and Friday at 7:00 AM (America/Los_Angeles)
+- **Coverage window:** Everything notable since the last digest — from the end date of the most recent genuine digest send through today (roughly the last 2-3 days)
 - **Dedup:** Determine the last send by searching Gmail's sent folder for prior "News Digest: ..." subjects — do NOT rely on a repo file or git commit/push for history (the GitHub App for these routines is authorization-only and can't push commits)
 - **Content, in this order:**
   1. Politics — major domestic and international developments
