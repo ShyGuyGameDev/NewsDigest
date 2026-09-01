@@ -11,7 +11,7 @@ Send a news + fun facts digest email every Monday, Wednesday, and Friday at 7:00
   2. Tech — notable launches, industry shifts, research breakthroughs
   3. Science — new discoveries, studies, space/health news
   4. Wildcard — anything else genuinely interesting (culture, sports, odd stories) that doesn't fit above
-  5. Fun fact(s) — 1-3 surprising/delightful facts, unrelated to the news, as a lighter closer
+  5. Fun fact(s) — 1-3 facts, unrelated to the news, as a lighter closer. Each must be genuinely surprising (not common knowledge) AND verifiable against a reputable source (link it). Mix up the topic areas across sends rather than leaning on one repeatedly; a shared domain within a single send is fine if both facts are strong.
 - **Per-item format:** short headline + 2-4 sentence plain-language summary + source link. Assume no prior context.
 - **Length:** signal over completeness — skimmable beats exhaustive. Cap each section at ~5-10 items.
 - **Subject line:** "News Digest: <start date> – <end date>" (the range it covers) — kept consistent so it's searchable for dedup.
