@@ -20,27 +20,21 @@ Send a news + fun fact digest email every Monday, Wednesday, and Friday at 7:00 
 
 ## Recipients
 
-The recipient list is driven entirely by Gmail — no addresses are stored in this repo.
+The digest goes to a fixed base address plus a subscriber list stored in Supabase. No email addresses are stored in this repo.
 
-- **Base recipient:** shyguygamedev@gmail.com (always included).
-- **Anchor email:** the original digest with the exact subject `News Digest: Aug 28 – Aug 31, 2026` (the first test send).
-- **Adding subscribers:** from the shyguygamedev@gmail.com mailbox (the account the Gmail connector is attached to), **forward** the anchor email to whoever should receive the digest. Keep Gmail's default `Fwd:` prefix; do not edit the rest of the subject line.
-- **How the list is built each run:** before sending, the agent finds the anchor thread and fetches the **entire thread** (`get_thread`), then walks **every message in it**. It counts **only forwards of that one specific anchor digest, sent from shyguygamedev@gmail.com** — a message qualifies when its sender is shyguygamedev@gmail.com and its subject is exactly `Fwd: News Digest: Aug 28 – Aug 31, 2026`. Replies, reply-all Cc additions, the original anchor email, and forwards of any other digest are all ignored. From each qualifying forward it collects the To/Cc/Bcc addresses, lowercases, dedupes, and drops shyguygamedev@gmail.com. The result is the extra subscriber list.
-- **Do NOT build the list from `search_threads` / `search` results alone.** That search truncates the messages it returns per thread (only ~5), so forwards silently go missing once more than a handful of people have been added. Use it only to locate the anchor thread's ID, then read the full thread with `get_thread` and enumerate messages from there. Cross-check that the number of `Fwd:` messages you processed matches what the thread actually contains.
-- **The list is re-derived from scratch on every run** — forward the anchor to more people at any time and they are automatically included on the next send.
-- **Trashed forwards don't count:** a `Fwd:` anchor message sitting in Trash is treated as a pending removal — skip its recipients when building the list.
-- **Send format:** one email per run, `To:` shyguygamedev@gmail.com and `Bcc:` all extra subscribers (Bcc so subscribers can't see each other's addresses).
-- **Always double-check the Bcc list before every send:** after deriving the list, re-fetch the full anchor thread with `get_thread`, list every `Fwd:` message and its recipients, and confirm each resolved Bcc address traces back to a qualifying, non-trashed forward — and that no such forward was missed. Never send with an unverified list.
-- **Removing a subscriber:** delete that person's forward (the `Fwd: News Digest: Aug 28 – Aug 31, 2026` message) from All Mail, including Trash.
-
-## Supabase (subscriber store) — NOT IN USE
-
-The recipient list currently comes entirely from Gmail (above). Supabase is **not**
-wired into the routine.
-
-A schema for a future subscriber store lives in [`supabase/schema.sql`](supabase/schema.sql),
-and the full from-scratch setup procedure is in [`supabase/SETUP.md`](supabase/SETUP.md).
-Do not follow those steps until you actually intend to switch the routine off Gmail.
+- **Base recipient:** shyguygamedev@gmail.com — always in `To:`.
+- **Subscriber list:** the `public.subscribers` table in Supabase. Each row stores `email_enc` — the address encrypted with Fernet. No plaintext address is stored anywhere.
+- **Environment (set in the routine's settings, not this repo):**
+  - `SUPABASE_URL` — the project URL
+  - `SUPABASE_PUBLISHABLE_KEY` — read-only publishable key. Safe to expose: RLS limits it to `SELECT` of `email_hash, email_enc, created_at` and permits no writes.
+  - `EMAIL_ENC_KEY` — Fernet key that decrypts `email_enc`.
+- **How the list is built each run:**
+  1. `GET $SUPABASE_URL/rest/v1/subscribers?select=email_enc` with headers `apikey: $SUPABASE_PUBLISHABLE_KEY` and `Authorization: Bearer $SUPABASE_PUBLISHABLE_KEY`.
+  2. Decrypt every `email_enc` with `EMAIL_ENC_KEY` (Python: `cryptography.fernet.Fernet`; `pip install cryptography` in the setup step if needed).
+  3. Lowercase, trim, dedupe, drop shyguygamedev@gmail.com. The remainder is the Bcc list.
+- **Send format:** one email per run, `To:` shyguygamedev@gmail.com and `Bcc:` the decrypted subscriber list (Bcc so subscribers can't see each other's addresses).
+- **Verify before every send:** print the decrypted Bcc list and confirm its length matches the number of rows returned from Supabase. Never send with an unverified list.
+- **Adding / removing subscribers:** insert or delete rows in `public.subscribers`. Writes need the Supabase service_role key (which the routine does **not** hold) — do it from the SQL editor or a separate admin tool. Each row needs `email_hash` (HMAC-SHA256 of the lowercased address, keyed with `EMAIL_HASH_PEPPER`) and `email_enc` (Fernet of the lowercased address with `EMAIL_ENC_KEY`). See [`supabase/`](supabase/).
 
 ## Dedup
 
