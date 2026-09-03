@@ -13,8 +13,9 @@ Send a news + fun fact digest email every Monday, Wednesday, and Friday at 7:00 
   4. Business — markets and the economy: earnings, M&A/IPOs, central-bank and rate moves, economic data (jobs, inflation, GDP), major corporate news, layoffs, antitrust/regulatory action, commodities/energy
   5. Wildcard — anything else genuinely interesting (culture, sports, odd stories) that doesn't fit above
   6. Fun fact — exactly 1 fact, unrelated to the news, as a lighter closer. It must be genuinely surprising (not common knowledge) AND verifiable against a reputable source (link it). **Never repeat a fact from any previous digest** — before choosing, the agent builds the list of already-used facts from **every past digest, not just the recent ones** (see "Checking past fun facts" below) and excludes any fact already used, including trivial rewordings. Vary the topic area from recent sends rather than leaning on one repeatedly.
-- **Per-item format:** short headline + 2-4 sentence plain-language summary + source link. Assume no prior context.
+- **Per-item content:** short headline + 2-4 sentence plain-language summary + source link. Assume no prior context.
 - **Length:** every news category carries **exactly 3 items** — pick the 3 most significant developments in the window and cut the rest. If fewer than 3 genuinely notable things happened in a category, fill with the next-most-relevant story rather than dropping below 3. Fun fact section is always exactly 1.
+- **Formatting:** the email is **rich HTML** — see [Email format](#email-format) for the exact template. Bold headlines, hyperlinked source names, section headers with emojis, line breaks between lines. Never send a plain-text-only digest.
 - **Subject line:** "News Digest: <start date> – <end date>" (the range it covers) — kept consistent so it's searchable for dedup.
 - **No git dependency:** no repo commits/pushes required for this routine to function.
 
@@ -32,9 +33,48 @@ The digest goes to a fixed base address plus a subscriber list stored in Supabas
   1. `GET $SUPABASE_URL/rest/v1/subscribers?select=email_enc` with headers `apikey: $SUPABASE_PUBLISHABLE_KEY` and `Authorization: Bearer $SUPABASE_PUBLISHABLE_KEY`.
   2. Decrypt every `email_enc` with `EMAIL_ENC_KEY` (Python: `cryptography.fernet.Fernet`; `pip install cryptography` in the setup step if needed).
   3. Lowercase, trim, dedupe, drop shyguygamedev@gmail.com. The remainder is the Bcc list.
-- **Send format:** one email per run, `To:` shyguygamedev@gmail.com and `Bcc:` the decrypted subscriber list (Bcc so subscribers can't see each other's addresses).
+- **Send format:** one email per run via the Gmail connector — `To:` shyguygamedev@gmail.com, `Bcc:` the decrypted subscriber list (Bcc so subscribers can't see each other's addresses). Pass the digest as **`htmlBody`** (the [Email format](#email-format) template) and a plain-text version as `body`.
 - **Verify before every send:** print the decrypted Bcc list and confirm its length matches the number of rows returned from Supabase. Never send with an unverified list.
 - **Adding / removing subscribers:** insert or delete rows in `public.subscribers`. Writes need the Supabase service_role key (which the routine does **not** hold) — do it from the SQL editor or a separate admin tool. Each row needs `email_hash` (HMAC-SHA256 of the lowercased address, keyed with `EMAIL_HASH_PEPPER`) and `email_enc` (Fernet of the lowercased address with `EMAIL_ENC_KEY`). See [`supabase/`](supabase/).
+
+## Email format
+
+Send the digest as **`htmlBody`** on the Gmail connector, following this template exactly. Also pass a plain-text `body` (the same content, links inline in parentheses) as the fallback. Match the original digests: bold headlines, `<br>` line breaks, source names as `<a href>` links, section headers with the emoji shown below.
+
+Section headers and their emojis, in order: **🏛️ Politics**, **💻 Tech**, **🔬 Science**, **💼 Business**, **🎲 Wildcard**, **✨ Fun fact**.
+
+```html
+<div style="font-family:-apple-system,Helvetica,Arial,sans-serif;max-width:640px;margin:0 auto;color:#222;line-height:1.5">
+  <h1 style="font-size:22px;margin-bottom:4px">News Digest: Sep 1 – Sep 3, 2026</h1>
+  <p style="color:#666;margin-top:0;font-size:13px">Everything notable since Monday.</p>
+
+  <h2 style="font-size:18px;border-bottom:2px solid #333;padding-bottom:4px;margin-top:28px">🏛️ Politics</h2>
+
+  <p><strong>Headline sentence, ending with a period.</strong><br>
+  Two to four sentences of plain-language summary. Assume the reader has no prior context.<br>
+  <a href="https://example.com/article">Source Name</a></p>
+
+  <!-- exactly 3 <p> items per news section -->
+
+  <h2 style="font-size:18px;border-bottom:2px solid #333;padding-bottom:4px;margin-top:28px">💻 Tech</h2>
+  <!-- ... -->
+
+  <h2 style="font-size:18px;border-bottom:2px solid #333;padding-bottom:4px;margin-top:28px">✨ Fun fact</h2>
+
+  <p><strong>The surprising claim, stated in one line.</strong><br>
+  One or two sentences explaining it. <a href="https://example.com/source">Source Name</a></p>
+
+  <hr style="margin-top:32px;border:none;border-top:1px solid #ddd">
+  <p style="color:#999;font-size:12px">Your automated News Digest — sent every Monday, Wednesday, and Friday.</p>
+</div>
+```
+
+Rules:
+- `<h1>` is the exact subject line. The grey line under it is `Everything notable since <weekday of the last digest>.`
+- Every news section has **exactly 3** `<p>` items; Fun fact has **exactly 1**.
+- Each news item: `<strong>headline</strong><br>` then summary `<br>` then one `<a href>` source link.
+- Link text is the publication name (e.g. `Reuters`, `NPR`), never a bare URL.
+- Keep the inline styles as shown — email clients need them; do not switch to a `<style>` block or external CSS.
 
 ## Dedup
 
