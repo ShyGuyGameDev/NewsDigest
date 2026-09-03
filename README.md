@@ -1,20 +1,20 @@
 # NewsDigest
 
-Send a news + fun facts digest email every Monday, Wednesday, and Friday at 7:00 AM.
+Send a news + fun fact digest email every Monday, Wednesday, and Friday at 7:00 AM.
 
 - **From/To:** shyguygamedev@gmail.com → shyguygamedev@gmail.com (send from and to the same address)
 - **Schedule:** Every Monday, Wednesday, and Friday at 7:00 AM (America/Los_Angeles)
 - **Coverage window:** Everything notable since the last digest — from the end date of the most recent genuine digest send through today (roughly the last 2-3 days)
 - **Dedup:** Determine the last send by searching Gmail's sent folder for prior "News Digest: ..." subjects — do NOT rely on a repo file or git commit/push for history (the GitHub App for these routines is authorization-only and can't push commits)
-- **Content, in this order:**
+- **Content, in this order (exactly 3 items per news category, exactly 1 fun fact):**
   1. Politics — major domestic and international developments
   2. Tech — notable launches, industry shifts, research breakthroughs
   3. Science — new discoveries, studies, space/health news
   4. Business — markets and the economy: earnings, M&A/IPOs, central-bank and rate moves, economic data (jobs, inflation, GDP), major corporate news, layoffs, antitrust/regulatory action, commodities/energy
   5. Wildcard — anything else genuinely interesting (culture, sports, odd stories) that doesn't fit above
-  6. Fun fact(s) — 1-3 facts, unrelated to the news, as a lighter closer. Each must be genuinely surprising (not common knowledge) AND verifiable against a reputable source (link it). **Never repeat a fact from any previous digest** — before choosing, the agent builds the list of already-used facts from **every past digest, not just the recent ones** (see "Checking past fun facts" below) and excludes any fact already used, including trivial rewordings. Mix up the topic areas across sends rather than leaning on one repeatedly; a shared domain within a single send is fine if both facts are strong.
+  6. Fun fact — exactly 1 fact, unrelated to the news, as a lighter closer. It must be genuinely surprising (not common knowledge) AND verifiable against a reputable source (link it). **Never repeat a fact from any previous digest** — before choosing, the agent builds the list of already-used facts from **every past digest, not just the recent ones** (see "Checking past fun facts" below) and excludes any fact already used, including trivial rewordings. Vary the topic area from recent sends rather than leaning on one repeatedly.
 - **Per-item format:** short headline + 2-4 sentence plain-language summary + source link. Assume no prior context.
-- **Length:** signal over completeness — skimmable beats exhaustive. Cap each section at ~5-10 items.
+- **Length:** every news category carries **exactly 3 items** — pick the 3 most significant developments in the window and cut the rest. If fewer than 3 genuinely notable things happened in a category, fill with the next-most-relevant story rather than dropping below 3. Fun fact section is always exactly 1.
 - **Subject line:** "News Digest: <start date> – <end date>" (the range it covers) — kept consistent so it's searchable for dedup.
 - **No git dependency:** no repo commits/pushes required for this routine to function.
 
