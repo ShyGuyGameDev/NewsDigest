@@ -28,15 +28,24 @@ The digest goes to a fixed base address plus a subscriber list stored in Supabas
 - **Subscriber list:** the `public.subscribers` table in Supabase. Each row stores `email_enc` — the address encrypted with Fernet. No plaintext address is stored anywhere.
 - **Environment (set in the routine's settings, not this repo):**
   - `SUPABASE_URL` — the project URL
-  - `SUPABASE_PUBLISHABLE_KEY` — read-only publishable key. Safe to expose: RLS limits it to `SELECT` of `email_hash, email_enc, created_at` and permits no writes.
+  - `SUPABASE_PUBLISHABLE_KEY` — read-only publishable key. Safe to expose: RLS limits it to `SELECT` of `email_hash, email_enc, created_at, test` and permits no writes.
   - `EMAIL_ENC_KEY` — Fernet key that decrypts `email_enc`.
 - **How the list is built each run:**
-  1. `GET $SUPABASE_URL/rest/v1/subscribers?select=email_enc` with headers `apikey: $SUPABASE_PUBLISHABLE_KEY` and `Authorization: Bearer $SUPABASE_PUBLISHABLE_KEY`.
+  1. `GET $SUPABASE_URL/rest/v1/subscribers?select=email_enc` with headers `apikey: $SUPABASE_PUBLISHABLE_KEY` and `Authorization: Bearer $SUPABASE_PUBLISHABLE_KEY`. **Always filter by `test`:** a scheduled run adds `&test=eq.false`; a manual test run adds `&test=eq.true` (see [Manual test runs](#manual-test-runs)). The two audiences never overlap — a `test = true` row never receives a real digest.
   2. Decrypt every `email_enc` with `EMAIL_ENC_KEY` (Python: `cryptography.fernet.Fernet`; `pip install cryptography` in the setup step if needed).
   3. Lowercase, trim, dedupe, drop shyguygamedev@gmail.com. The remainder is the Bcc list.
 - **Send format:** one email per run via the Gmail connector — `To:` shyguygamedev@gmail.com, `Bcc:` the decrypted subscriber list (Bcc so subscribers can't see each other's addresses). Pass the digest as **`htmlBody`** (the [Email format](#email-format) template) and a plain-text version as `body`.
 - **Verify before every send:** print the decrypted Bcc list and confirm its length matches the number of rows returned from Supabase. Never send with an unverified list.
 - **Adding / removing subscribers:** insert or delete rows in `public.subscribers`. Writes need the Supabase service_role key (which the routine does **not** hold) — do it from the SQL editor or a separate admin tool. Each row needs `email_hash` (HMAC-SHA256 of the lowercased address, keyed with `EMAIL_HASH_PEPPER`) and `email_enc` (Fernet of the lowercased address with `EMAIL_ENC_KEY`). See [`supabase/`](supabase/).
+
+## Manual test runs
+
+A run is a **manual test** when it is triggered by hand (a one-off routine or a direct prompt), not by the Mon/Wed/Fri schedule. The prompt will say so explicitly. A manual test differs from a real run in four ways — everything else (content rules, trusted sources, format, fun-fact dedup) is identical:
+
+1. **Recipients:** send only to subscribers whose `test` column is `true` — fetch with `...&test=eq.true`. Still decrypt, still Bcc, still drop the base address. (A scheduled run uses `&test=eq.false` instead, so test recipients never get a real digest and real subscribers never get a test.)
+2. **Subject:** end it with ` [TEST]`, e.g. `News Digest: Sep 1 – Sep 3, 2026 [TEST]`. The dedup search excludes `-subject:TEST`, so a test never blocks a real run or gets counted as one.
+3. **Body:** the very first line, above the `<h1>` / above everything, is `⚠️ TEST SEND — not the real digest.`
+4. **Cleanup:** immediately after a successful send, move the sent message to Trash in shyguygamedev@gmail.com's mailbox (`trash_message` on the returned message id). Manual tests must not linger in Sent.
 
 ## Email format
 

@@ -7,6 +7,7 @@ table here. Addresses are never stored in plaintext:
 |---|---|---|
 | `email_hash` | `HMAC_SHA256(EMAIL_HASH_PEPPER, lower(trim(email)))`, hex | uniqueness, "is X subscribed?" |
 | `email_enc`  | `Fernet(EMAIL_ENC_KEY).encrypt(lower(trim(email)))` | decrypt to build the send list |
+| `test`       | boolean, default `false` | routing flag: scheduled runs send to `test = false` rows, manual test runs send to `test = true` rows — the two audiences never overlap ([`add_test_column.local.sql`](add_test_column.local.sql)) |
 
 `EMAIL_HASH_PEPPER` and `EMAIL_ENC_KEY` live only in the routine's environment
 (and a local gitignored `.env`) — never in the database, never in this repo.
